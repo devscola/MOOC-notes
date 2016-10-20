@@ -17,7 +17,6 @@ var app = {
   iniciaBotones: function() {
     var salvar = document.querySelector('#salvar');
     var anadir = document.querySelector('#anadir');
-    console.log(anadir);
 
     anadir.addEventListener('click' ,this.mostrarEditor ,false);
     salvar.addEventListener('click' ,this.salvarNota ,false);
@@ -34,6 +33,7 @@ var app = {
     app.construirNota();
     app.ocultarEditor();
     app.refrescarLista();
+    app.grabarDatos();
   },
 
   construirNota: function() {
@@ -71,10 +71,56 @@ var app = {
   anadirNota: function(id, titulo) {
     return "<div class='note-item' id='notas[" + id + "]'>" + titulo + "</div>";
   },
+
+  grabarDatos: function() {
+    window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, this.gotFS, this.fail);
+  },
+
+  gotFS: function(fileSystem) {
+    fileSystem.getFile("files/"+"model.json", {create: true, exclusive: false}, app.gotFileEntry, app.fail);
+  },
+
+  gotFileEntry: function(fileEntry) {
+    fileEntry.createWriter(app.gotFileWriter, app.fail);
+  },
+
+  gotFileWriter: function(writer) {
+        writer.onwriteend = function(evt) {
+          console.log("datos grabados en externalApplicationStorageDirectory");
+        };
+        writer.write(JSON.stringify(app.model));
+  },
+
+  leerDatos: function() {
+    window.resolveLocalFileSystemURL(cordova.file.externalApplicationStorageDirectory, this.obtenerFS, this.fail);
+  },
+
+  obtenerFS: function(fileSystem) {
+    fileSystem.getFile("files/"+"model.json", null, app.obtenerFileEntry, app.fail);
+  },
+
+  obtenerFileEntry: function(fileEntry) {
+    fileEntry.file(app.leerFile, app.fail);
+  },
+
+  leerFile: function(file) {
+    var reader = new FileReader();
+    reader.onloadend = function(evt) {
+      var data = evt.target.result;
+      app.model = JSON.parse(data);
+      app.inicio();
+    };
+    reader.readAsText(file);
+  },
+
+  fail: function(error) {
+    console.log(error.code);
+  },
+
 };
 
 if ('addEventListener' in document) {
-    document.addEventListener('DOMContentLoaded', function() {
-        app.inicio();
-    }, false);
+  document.addEventListener("deviceready", function() {
+    app.leerDatos();
+  }, false);
 };
