@@ -8,5 +8,6 @@
         devscola
     </author>
     <content src="index.html" />
+    <platform name="android" />
     <access origin="*" />
 </widget>
